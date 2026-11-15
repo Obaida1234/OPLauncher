@@ -3,36 +3,54 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>OP Craft</title>
 <style>
-html,body{margin:0;height:100%;background:#111;overflow:hidden;font-family:Tahoma,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;background:#111;overflow:hidden;font-family:Tahoma,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;color:#fff}
 canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
 #hb{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:4px;direction:ltr}
 #hb div{width:34px;height:34px;border:3px solid #fff6;box-sizing:border-box}
 #hb .s{border-color:#fff;transform:scale(1.15)}
 #cr{position:fixed;left:50%;top:50%;width:12px;height:12px;margin:-6px;border:2px solid #fff;border-radius:50%;opacity:.6;pointer-events:none}
-#hud{position:fixed;top:6px;right:8px;left:8px;color:#fff;font-size:12px;opacity:.85;text-shadow:0 1px 2px #000;pointer-events:none}
+#hud,#st,#ts{position:fixed;right:8px;left:8px;text-shadow:0 1px 2px #000;pointer-events:none}
+#hud{top:6px;font-size:12px;opacity:.85}
+#st{top:26px;font-size:14px;font-weight:bold;color:#9ef}
+#ts{top:30%;text-align:center;font-size:22px;font-weight:bold;color:#ffd27a}
 .b{position:fixed;width:52px;height:52px;border-radius:50%;background:#fff3;color:#fff;font-size:22px;border:2px solid #fff5;display:flex;align-items:center;justify-content:center}
+#m{position:fixed;inset:0;background:linear-gradient(#18314a,#0b1620);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:9;text-align:center;overflow:auto}
+#m h1{font-size:clamp(2.4rem,10vw,4rem);margin:0;direction:ltr;letter-spacing:3px}
+#m button{font-size:18px;padding:10px 30px;min-width:240px;background:#e8833a;border:0;border-radius:8px;font-weight:700;cursor:pointer}
+#m label{display:flex;gap:10px;align-items:center;justify-content:space-between;min-width:280px;font-size:14px}
 </style></head><body>
-<canvas id="c"></canvas><div id="cr"></div><div id="hb"></div>
-<div id="st" style="position:fixed;top:26px;right:8px;left:8px;color:#9ef;font-size:14px;font-weight:bold;text-shadow:0 1px 2px #000;pointer-events:none"></div><div id="hud">OP Craft · WASD حركة · مسافة قفز · يسار كسر · يمين بناء · 1-9 اختيار كتلة · الهدف: اجمع 6 بلورات مدفونة تحت الأرض · Q الجودة</div>
+<canvas id="c"></canvas><div id="cr"></div><div id="hb"></div><div id="st"></div><div id="ts"></div>
+<div id="hud">WASD حركة · مسافة قفز · يسار ضرب/كسر · يمين بناء · 1-9 كتل · Q الدقة · Esc القائمة</div>
+<div id="m"></div>
 <script>
 const W=96,D=96,H=32,B=new Uint8Array(W*D*H);
-const C=[0,[90,170,70],[130,92,60],[125,125,135],[110,76,42],[45,125,55],[222,206,140],[190,72,62],[190,150,92],[232,232,238],[90,230,240]];
+const C=[0,[90,170,70],[130,92,60],[125,125,135],[110,76,42],[45,125,55],[222,206,140],[190,72,62],[190,150,92],[232,232,238],[90,230,240],[150,90,255],[255,120,30]];
 const MORT=[205,200,190],SH=[.8,.8,.5,1,.65,.65],I=(x,y,z)=>x+z*W+y*W*D;
+const TN=[[1,1,1],[1.2,.6,.5],[.85,.8,1.2]],HZ=[[190,220,245],[130,45,30],[70,45,100]],TP=[[80,150,230],[45,12,12],[8,6,28]],NEED=[6,4,3],DN=['العالم الأخضر','عالم الجمر','عالم الفراغ'];
+let S={sc:45,fov:75,vd:48,sens:5};try{Object.assign(S,JSON.parse(localStorage.opc))}catch(e){}
+function sv(){try{localStorage.opc=JSON.stringify(S)}catch(e){}}
 function hs(x,z){const n=Math.sin(x*127.1+z*311.7)*43758.5453;return n-Math.floor(n)}
 function th(a,b,c){let h=Math.imul(a,374761393)+Math.imul(b,668265263)+Math.imul(c,2246822519)|0;h=Math.imul(h^(h>>>13),1274126177);return((h^(h>>>16))&255)/255}
 function ns(x,z){const xi=Math.floor(x),zi=Math.floor(z),fx=x-xi,fz=z-zi,u=fx*fx*(3-2*fx),v=fz*fz*(3-2*fz),a=hs(xi,zi),b=hs(xi+1,zi),c=hs(xi,zi+1),d=hs(xi+1,zi+1);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v}
-for(let x=0;x<W;x++)for(let z=0;z<D;z++){const h=Math.floor(8+ns(x/18,z/18)*9+ns(x/6,z/6)*2);for(let y=0;y<=h;y++)B[I(x,y,z)]=y<h-3?3:y<h?2:(h<9?6:1)}
-for(let i=0;i<70;i++){const x=3+Math.floor(hs(i,1)*(W-6)),z=3+Math.floor(hs(i,2)*(D-6));let y=H-1;while(y>0&&!B[I(x,y,z)])y--;if(B[I(x,y,z)]!=1)continue;for(let t=1;t<=4;t++)B[I(x,y+t,z)]=4;for(let a=-2;a<=2;a++)for(let b=-2;b<=2;b++)for(let c=3;c<=5;c++)if(Math.abs(a)+Math.abs(b)+c-3<4&&!B[I(x+a,y+c,z+b)])B[I(x+a,y+c,z+b)]=5}
-const CR=[];
-for(let i=0;i<6;i++){const x=6+Math.floor(hs(i,9)*(W-12)),z=6+Math.floor(hs(i,8)*(D-12));let y=H-1;while(y>0&&(!B[I(x,y,z)]||B[I(x,y,z)]==4||B[I(x,y,z)]==5))y--;y-=3+(i%3);if(y<1)y=1;B[I(x,y,z)]=10;CR.push([x,y,z])}
-let got=0,won=false,fc=0;const st=document.getElementById('st');
-function status(){let m=1e9;for(const c of CR)if(B[I(c[0],c[1],c[2])]==10){const d=Math.hypot(c[0]+.5-px,c[1]+.5-(py-1.6),c[2]+.5-pz);if(d<m)m=d}st.textContent='البلورات: '+got+'/6'+(m<1e9?' · أقرب بلورة: '+Math.round(m)+' م':'')}
-function win(){won=true;document.exitPointerLock&&document.exitPointerLock();const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;background:#000c;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-size:22px;text-align:center';d.innerHTML='<div style="font-size:34px">🎉 مبروك! أنهيت OP Craft</div><div>جمعت كل البلورات الست</div><button style="font-size:18px;padding:10px 24px" onclick="location.reload()">عالم جديد</button><button style="font-size:16px;padding:8px 20px" onclick="this.parentNode.remove()">متابعة اللعب</button>';document.body.appendChild(d)}
-let px=48.5,pz=48.5,py=0,vy=0,yaw=0,pitch=0,sel=0,ground=false;
-{let y=H-1;while(y>0&&!B[I(48,y,48)])y--;py=y+1+1.6}
-function solid(x,y,z){if(x<0||z<0||x>=W||z>=D||y<0)return true;return y>=H?false:B[I(x,y,z)]>0}
+let dim=0,got=0,won=false,fc=0,playing=false,started=false,hp=20,hurtT=0,portalOpen=false,SX=48.5,SY=0,SZ=48.5,px=48.5,py=0,pz=48.5,vy=0,yaw=0,pitch=0,sel=0,ground=false;
+const M=[],CR=[],touch='ontouchstart' in window;
+function gh(x,z){x=Math.floor(x);z=Math.floor(z);if(x<0||z<0||x>=W||z>=D)return 0;for(let y=dim==1?H-3:H-1;y>=0;y--){const b=B[I(x,y,z)];if(b&&b!=4&&b!=5)return y+1}return 0}
+function sp(t){for(let k=0;k<60;k++){const x=4+Math.random()*(W-8),z=4+Math.random()*(D-8),y=gh(x,z);if(y>0&&Math.hypot(x-SX,z-SZ)>8){M.push({t,x,y,gy:y,z,hp:t==1?6:4,a:Math.random()*6.28,c:0});return}}}
+function gen(d){B.fill(0);dim=d;got=0;won=false;portalOpen=false;CR.length=0;M.length=0;
+if(d==0){for(let x=0;x<W;x++)for(let z=0;z<D;z++){const h=Math.floor(8+ns(x/18,z/18)*9+ns(x/6,z/6)*2);for(let y=0;y<=h;y++)B[I(x,y,z)]=y<h-3?3:y<h?2:(h<9?6:1)}
+for(let i=0;i<70;i++){const x=3+Math.floor(hs(i,1)*(W-6)),z=3+Math.floor(hs(i,2)*(D-6));let y=H-1;while(y>0&&!B[I(x,y,z)])y--;if(B[I(x,y,z)]!=1)continue;for(let t=1;t<=4;t++)B[I(x,y+t,z)]=4;for(let a=-2;a<=2;a++)for(let b=-2;b<=2;b++)for(let c=3;c<=5;c++)if(Math.abs(a)+Math.abs(b)+c-3<4&&!B[I(x+a,y+c,z+b)])B[I(x+a,y+c,z+b)]=5}}
+else if(d==1){for(let x=0;x<W;x++)for(let z=0;z<D;z++){const h=Math.floor(5+ns(x/14,z/14)*10+ns(x/5,z/5)*2);for(let y=0;y<=h;y++)B[I(x,y,z)]=3;for(let y=h+1;y<=7;y++)B[I(x,y,z)]=12;B[I(x,H-1,z)]=B[I(x,H-2,z)]=3}
+for(let x=46;x<=50;x++)for(let z=46;z<=50;z++){for(let y=0;y<=10;y++)B[I(x,y,z)]=3;for(let y=11;y<H-2;y++)B[I(x,y,z)]=0}}
+else{for(let k=0;k<18;k++){const cx=k?10+Math.floor(hs(k,3)*(W-20)):48,cz=k?10+Math.floor(hs(k,6)*(D-20)):48,cy=k?10+Math.floor(hs(k,4)*12):14,r=k?4+hs(k,5)*5:9;
+for(let x=Math.max(0,Math.floor(cx-r));x<Math.min(W,cx+r);x++)for(let z=Math.max(0,Math.floor(cz-r));z<Math.min(D,cz+r);z++){const q=Math.hypot(x-cx,z-cz);if(q<r){const tk=Math.floor((r-q)*.8)+1;for(let y=cy-tk;y<=cy;y++)if(y>0)B[I(x,y,z)]=y==cy?1:y>cy-2?2:3}}}}
+SX=48.5;SZ=48.5;SY=gh(48,48)+1.6;
+for(let i=0,tr=0;i<NEED[d]&&tr<300;tr++){const x=5+Math.floor(hs(tr,d*7+9)*(W-10)),z=5+Math.floor(hs(tr+.5,d*5+8)*(D-10)),y=gh(x,z);if(!y||B[I(x,y-1,z)]==12)continue;const yy=y-1-(d==2?1:3+(i%3));if(yy<1)continue;B[I(x,yy,z)]=10;CR.push([x,yy,z]);i++}
+const mc=[[[0,10],[1,5]],[[1,8],[2,4]],[[2,6]]][d];for(const [t,n] of mc)for(let i=0;i<n;i++)sp(t);
+rs()}
+function rs(){px=SX;py=SY;pz=SZ;vy=0;hp=20}
+function solid(x,y,z){if(x<0||z<0||x>=W||z>=D)return true;if(y<0)return dim!=2;if(y>=H)return false;const b=B[I(x,y,z)];return b>0&&b!=11}
 function hit(x,y,z){for(const a of[-.3,.3])for(const b of[-.3,.3])for(const h of[.05,.9,1.7])if(solid(Math.floor(x+a),Math.floor(y+h),Math.floor(z+b)))return true;return false}
-let rb,rt,rs,rx,ry,rz,qx,qy,qz;
+let rb,rt,rs_,rx,ry,rz,qx,qy,qz;
 function march(ox,oy,oz,dx,dy,dz,max){
 let x=Math.floor(ox),y=Math.floor(oy),z=Math.floor(oz);
 const sx=dx>0?1:-1,sy=dy>0?1:-1,sz=dz>0?1:-1,ax=dx?Math.abs(1/dx):1e30,ay=dy?Math.abs(1/dy):1e30,az=dz?Math.abs(1/dz):1e30;
@@ -42,54 +60,93 @@ qx=x;qy=y;qz=z;
 if(tx<ty&&tx<tz){x+=sx;t=tx;tx+=ax;s=0}else if(ty<tz){y+=sy;t=ty;ty+=ay;s=1}else{z+=sz;t=tz;tz+=az;s=2}
 if(x<0||z<0||x>=W||z>=D||y>=H||y<0)return rb=0;
 const b=B[I(x,y,z)];
-if(b){rb=b;rt=t;rs=s*2+((s==0?dx:s==1?dy:dz)>0?0:1);rx=x;ry=y;rz=z;return b}}
+if(b){rb=b;rt=t;rs_=s*2+((s==0?dx:s==1?dy:dz)>0?0:1);rx=x;ry=y;rz=z;return b}}
 return rb=0}
-const cv=document.getElementById('c'),g=cv.getContext('2d'),QS=[[160,90],[240,135],[320,180],[400,225]];
-let qi=1,RW,RH,img,buf;
-function setQ(){RW=QS[qi][0];RH=QS[qi][1];cv.width=RW;cv.height=RH;img=g.createImageData(RW,RH);buf=new Uint32Array(img.data.buffer)}
-setQ();
+const cv=document.getElementById('c'),g=cv.getContext('2d');
+let RW,RH,img,buf,Z;
+function setQ(){const s=S.sc/100;RW=Math.max(120,Math.round(innerWidth*s));RH=Math.max(68,Math.round(innerHeight*s));cv.width=RW;cv.height=RH;img=g.createImageData(RW,RH);buf=new Uint32Array(img.data.buffer);Z=new Float32Array(RW*RH)}
+onresize=setQ;
+function spr(t,u,v){
+if(t==0){if(((u-.5)/.42)**2+((v-.62)/.36)**2<1){if((u-.35)**2+(v-.52)**2<.004||(u-.65)**2+(v-.52)**2<.004)return[30,20,20];return v>.72?[225,195,150]:[150,105,65]}if((u-.22)**2+(v-.22)**2<.012||(u-.78)**2+(v-.22)**2<.012)return[120,80,50];return null}
+if(t==1){if(u>.28&&u<.72&&v>.05&&v<.95){if(v>.15&&v<.22&&(Math.abs(u-.4)<.06||Math.abs(u-.6)<.06))return[255,70,70];return v<.3?[70,45,95]:[45,28,65]}if(((u>.1&&u<.28)||(u>.72&&u<.9))&&v>.32&&v<.7)return[55,35,80];return null}
+const a=u-.5,b=v-.5,q=a*a+b*b;if(q<.2)return q<.03?[255,255,230]:q<.1?[90,235,245]:[40,150,200];return null}
+function drawMobs(fx,fy,fz,rxx,rzz,ux,uy,uz,asp,tn){const L=[];
+for(const m of M){const dx=m.x-px,dy=m.y+(m.t==1?1:.4)-py,dz=m.z-pz,cz=dx*fx+dy*fy+dz*fz;if(cz>.3)L.push([cz,m,dx,dy,dz])}
+L.sort((a,b)=>b[0]-a[0]);
+for(const [cz,m,dx,dy,dz] of L){const cx=dx*rxx+dz*rzz,cy=dx*ux+dy*uy+dz*uz,sx=(cx/(cz*tn*asp)+1)/2*RW,sy=(1-cy/(cz*tn))/2*RH,k=RH/(2*tn*cz),hh=(m.t==1?2:.8)*k,ww=.9*k,ds=Math.hypot(dx,dy,dz),l=Math.max(.35,1-ds/(S.vd*.9));
+for(let j=Math.max(0,Math.floor(sy-hh/2));j<Math.min(RH,Math.ceil(sy+hh/2));j++)for(let i=Math.max(0,Math.floor(sx-ww/2));i<Math.min(RW,Math.ceil(sx+ww/2));i++){const p=j*RW+i;if(ds<Z[p]){const c=spr(m.t,(i-sx)/ww+.5,(j-sy)/hh+.5);if(c){buf[p]=4278190080|((c[2]*l|0)<<16)|((c[1]*l|0)<<8)|(c[0]*l|0)}}}}}
 function render(){
-const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
-const fx=sy*cp,fy=sp,fz=cy*cp,ux=-sy*sp,uy=cp,uz=-cy*sp,asp=RW/RH,tn=.75;
+const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp_=Math.sin(pitch),tn=Math.tan(S.fov*Math.PI/360);
+const fx=sy*cp,fy=sp_,fz=cy*cp,ux=-sy*sp_,uy=cp,uz=-cy*sp_,asp=RW/RH,T=TN[dim],hz=HZ[dim],tp=TP[dim],mx=S.vd+14,fd=S.vd;
 for(let j=0,p=0;j<RH;j++){const v=(1-2*(j+.5)/RH)*tn;
 for(let i=0;i<RW;i++,p++){const u=(2*(i+.5)/RW-1)*tn*asp;
 let dx=fx+cy*u+ux*v,dy=fy+uy*v,dz=fz-sy*u+uz*v;const l=1/Math.hypot(dx,dy,dz);dx*=l;dy*=l;dz*=l;
-const m=dy>0?dy:0;let r=190-m*110,gg=220-m*70,b=245-m*15;
-if(march(px,py,pz,dx,dy,dz,60)){const c=C[rb],ax=rs>>1,hx=px+dx*rt,hy=py+dy*rt,hz=pz+dz*rt,tu=ax==0?hz:hx,tv=ax==1?hz:hy,fu=tu-Math.floor(tu),fv=tv-Math.floor(tv),iu=(fu*8)|0,iv=(fv*8)|0,t=th(iu,iv,rb*8+(rs==3?1:0));let cc=c,f=SH[rs]*(.84+t*.3);
-if(rb==1&&ax!=1&&fv<.75)cc=C[2];else if(rb==4&&ax!=1)f*=(iu&1)?.88:1.06;else if(rb==7&&(iv%4==0||(iu+(iv>>2)*4)%8==0)){cc=MORT;f=SH[rs]}else if(rb==8&&iv%4==0)f*=.8;else if(rb==10)f=1.25+t*.3;else if(rb==5)f*=.7+t*.6;
-let k=rt/58;k=k>1?1:k*k;const n=1-k;r=cc[0]*f*n+r*k;gg=cc[1]*f*n+gg*k;b=cc[2]*f*n+b*k}
+const m=dy>0?dy:0;let r=hz[0]+(tp[0]-hz[0])*m,gg=hz[1]+(tp[1]-hz[1])*m,b=hz[2]+(tp[2]-hz[2])*m;
+if(march(px,py,pz,dx,dy,dz,mx)){const c=C[rb],ax=rs_>>1,hx=px+dx*rt,hy=py+dy*rt,hz2=pz+dz*rt,tu=ax==0?hz2:hx,tv=ax==1?hz2:hy,fu=tu-Math.floor(tu),fv=tv-Math.floor(tv),iu=(fu*8)|0,iv=(fv*8)|0,t=th(iu,iv,rb*8+(rs_==3?1:0));let cc=c,f=SH[rs_]*(.84+t*.3);
+if(rb==1&&ax!=1&&fv<.75)cc=C[2];else if(rb==4&&ax!=1)f*=(iu&1)?.88:1.06;else if(rb==7&&(iv%4==0||(iu+(iv>>2)*4)%8==0)){cc=MORT;f=SH[rs_]}else if(rb==8&&iv%4==0)f*=.8;else if(rb>=10)f=1.25+t*.3;else if(rb==5)f*=.7+t*.6;
+let k=rt/fd;k=k>1?1:k*k;const n=1-k;r=cc[0]*T[0]*f*n+r*k;gg=cc[1]*T[1]*f*n+gg*k;b=cc[2]*T[2]*f*n+b*k;Z[p]=rt}else Z[p]=1e9;
 r=r>255?255:r;gg=gg>255?255:gg;b=b>255?255:b;
 buf[p]=4278190080|(b<<16)|(gg<<8)|r}}
+drawMobs(fx,fy,fz,cy,-sy,ux,uy,uz,asp,tn);
 g.putImageData(img,0,0)}
 function fv(){const cp=Math.cos(pitch);return[Math.sin(yaw)*cp,Math.sin(pitch),Math.cos(yaw)*cp]}
-function brk(){const f=fv();if(march(px,py,pz,f[0],f[1],f[2],8)&&rt<6){if(rb==10){got++;if(got>=6&&!won)win()}B[I(rx,ry,rz)]=0}}
-function plc(){const f=fv();if(march(px,py,pz,f[0],f[1],f[2],8)&&rt<6&&qx>=0&&qz>=0&&qx<W&&qz<D&&qy>=0&&qy<H&&!B[I(qx,qy,qz)]){B[I(qx,qy,qz)]=sel+1;if(hit(px,py-1.6,pz))B[I(qx,qy,qz)]=0}}
+function atk(){const f=fv();for(const m of M){const dx=m.x-px,dy=m.y+(m.t==1?1:.4)-py,dz=m.z-pz,al=dx*f[0]+dy*f[1]+dz*f[2];if(al<0||al>3.6)continue;if(Math.hypot(dx-f[0]*al,dy-f[1]*al,dz-f[2]*al)<(m.t==1?.8:.6)){m.hp-=2;m.x+=f[0]*.9;m.z+=f[2]*.9;if(m.hp<=0){if(m.t==0)hp=Math.min(20,hp+4);M.splice(M.indexOf(m),1);sp(m.t)}return true}}return false}
+function toast(s){const e=document.getElementById('ts');e.textContent=s;clearTimeout(toast.t);toast.t=setTimeout(()=>e.textContent='',3500)}
+function openPortal(){const x=Math.floor(SX)+2,z=Math.floor(SZ),y=gh(x,z);if(y>0&&y+1<H){B[I(x,y,z)]=B[I(x,y+1,z)]=11;portalOpen=true;toast('فُتحت البوابة قرب نقطة البداية!')}}
+function win(){won=true;playing=false;document.exitPointerLock&&document.exitPointerLock();const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;background:#000c;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-size:22px;text-align:center;z-index:8';d.innerHTML='<div style="font-size:34px">🎉 مبروك! أنهيت OP Craft</div><div>عبرت العوالم الثلاثة</div><button style="font-size:18px;padding:10px 24px" onclick="location.reload()">لعب من جديد</button><button style="font-size:16px;padding:8px 20px" onclick="this.parentNode.remove();playing=true">متابعة اللعب</button>';document.body.appendChild(d)}
+function brk(){if(!playing)return;if(atk())return;const f=fv();if(march(px,py,pz,f[0],f[1],f[2],8)&&rt<6){if(rb==11)return;if(rb==10){got++;if(dim<2&&got>=NEED[dim]&&!portalOpen)openPortal();if(dim==2&&got>=NEED[2]&&!won)win()}B[I(rx,ry,rz)]=0}}
+function plc(){if(!playing)return;const f=fv();if(march(px,py,pz,f[0],f[1],f[2],8)&&rt<6&&qx>=0&&qz>=0&&qx<W&&qz<D&&qy>=0&&qy<H&&!B[I(qx,qy,qz)]){B[I(qx,qy,qz)]=sel+1;if(hit(px,py-1.6,pz))B[I(qx,qy,qz)]=0}}
 const K={};
-function look(dx,dy){yaw+=dx*.003;pitch=Math.max(-1.5,Math.min(1.5,pitch-dy*.003))}
-function hb(){const e=document.getElementById('hb');e.innerHTML='';for(let i=0;i<9;i++){const d=document.createElement('div'),c=C[i+1];d.style.background='rgb('+c+')';if(i==sel)d.className='s';d.onclick=()=>{sel=i;hb()};e.appendChild(d)}}
+function look(dx,dy){const s=S.sens*.0006;yaw+=dx*s;pitch=Math.max(-1.5,Math.min(1.5,pitch-dy*s))}
+function hb(){const e=document.getElementById('hb');e.innerHTML='';for(let i=0;i<9;i++){const d=document.createElement('div');d.style.background='rgb('+C[i+1]+')';if(i==sel)d.className='s';d.onclick=()=>{sel=i;hb()};e.appendChild(d)}}
 hb();
-onkeydown=e=>{K[e.code]=1;if(e.code=='KeyQ'){qi=(qi+1)%4;setQ()}const n=+e.code.slice(5);if(/^Digit[1-9]$/.test(e.code)){sel=n-1;hb()}};
+function cyc(){const P=[30,45,70,100];S.sc=P[(P.indexOf(S.sc)+1)%4];setQ();sv();toast('الدقة '+S.sc+'%')}
+onkeydown=e=>{K[e.code]=1;if(e.code=='KeyQ')cyc();if(/^Digit[1-9]$/.test(e.code)){sel=+e.code.slice(5)-1;hb()}};
 onkeyup=e=>K[e.code]=0;
-cv.onclick=()=>{if(!('ontouchstart' in window)&&cv.requestPointerLock)cv.requestPointerLock()};
-onmousemove=e=>{if(document.pointerLockElement)look(e.movementX,e.movementY)};
+cv.onclick=()=>{if(playing&&!touch&&cv.requestPointerLock)cv.requestPointerLock()};
+onmousemove=e=>{if(document.pointerLockElement)look(e.movementX*5,e.movementY*5)};
 cv.onmousedown=e=>{if(document.pointerLockElement){e.button==0?brk():plc()}};
 oncontextmenu=e=>e.preventDefault();
 onwheel=e=>{sel=(sel+(e.deltaY>0?1:8))%9;hb()};
 let lx,ly;
 cv.addEventListener('touchstart',e=>{lx=e.touches[0].clientX;ly=e.touches[0].clientY});
-cv.addEventListener('touchmove',e=>{const t=e.touches[0];look((t.clientX-lx)*1.6,(t.clientY-ly)*1.6);lx=t.clientX;ly=t.clientY});
-if('ontouchstart' in window){
-[['▲','KeyW','left:62px;bottom:122px'],['▼','KeyS','left:62px;bottom:10px'],['◀','KeyA','left:8px;bottom:66px'],['▶','KeyD','left:116px;bottom:66px'],['⤒','Space','right:10px;bottom:70px'],['⛏',brk,'right:10px;bottom:130px'],['▣',plc,'right:70px;bottom:70px'],['Q',()=>{qi=(qi+1)%4;setQ()},'left:8px;top:30px;width:36px;height:36px;font-size:14px']].forEach(a=>{
+cv.addEventListener('touchmove',e=>{const t=e.touches[0];look((t.clientX-lx)*8,(t.clientY-ly)*8);lx=t.clientX;ly=t.clientY});
+if(touch){[['▲','KeyW','left:62px;bottom:122px'],['▼','KeyS','left:62px;bottom:10px'],['◀','KeyA','left:8px;bottom:66px'],['▶','KeyD','left:116px;bottom:66px'],['⤒','Space','right:10px;bottom:70px'],['⛏',brk,'right:10px;bottom:130px'],['▣',plc,'right:70px;bottom:70px'],['Q',cyc,'left:8px;top:50px;width:36px;height:36px;font-size:14px'],['☰',()=>menu('pause'),'left:52px;top:50px;width:36px;height:36px;font-size:16px']].forEach(a=>{
 const d=document.createElement('div');d.className='b';d.textContent=a[0];d.style.cssText=a[2];
 d.addEventListener('touchstart',e=>{e.preventDefault();typeof a[1]=='string'?K[a[1]]=1:a[1]()});
 d.addEventListener('touchend',e=>{if(typeof a[1]=='string')K[a[1]]=0});document.body.appendChild(d)})}
+function mu(dt){for(const m of M){const dx=px-m.x,dz=pz-m.z,ds=Math.hypot(dx,dz),rg=m.t==1?18:22,chase=m.t&&ds<rg;m.c-=dt;if(!chase&&m.c<=0){m.a=Math.random()*6.28;m.c=2+Math.random()*3}
+const ang=chase?Math.atan2(dx,dz):m.a,v=(m.t==0?1:m.t==1?2.2:2.8)*dt*((!m.t||ds>1)?1:0),nx=m.x+Math.sin(ang)*v,nz=m.z+Math.cos(ang)*v,gq=gh(nx,nz);
+if(gq&&Math.abs(gq-m.gy)<=1.6){m.x=nx;m.z=nz;m.gy=gq}else m.a+=2;
+m.y=m.t==2?m.gy+1.2+Math.sin(performance.now()/300+m.a)*.3:m.gy;
+if(m.t&&Math.hypot(dx,m.y+.5-(py-.8),dz)<1.3&&hurtT<=0){hp-=m.t==1?2:1;hurtT=.9}}}
 function upd(dt){
 const mx=(K.KeyD?1:0)-(K.KeyA?1:0),mz=(K.KeyW?1:0)-(K.KeyS?1:0),c=Math.cos(yaw),s=Math.sin(yaw),vx=(c*mx+s*mz)*4.5,vz=(-s*mx+c*mz)*4.5;
 vy-=22*dt;
 const nx=px+vx*dt;if(!hit(nx,py-1.6,pz))px=nx;
 const nz=pz+vz*dt;if(!hit(px,py-1.6,nz))pz=nz;
 const ny=py+vy*dt;ground=false;if(!hit(px,ny-1.6,pz))py=ny;else{if(vy<0)ground=true;vy=0}
-if(K.Space&&ground)vy=7.5}
+if(K.Space&&ground)vy=7.5;
+hurtT-=dt;hp=Math.min(20,hp+dt*.3);
+const fb=Math.floor(py-1.65),ix=Math.floor(px),iz=Math.floor(pz);
+if(fb>=0&&B[I(ix,fb,iz)]==12)hp-=dt*3;
+if(B[I(ix,Math.max(0,Math.floor(py-.8)),iz)]==11&&dim<2){gen(dim+1);toast('وصلت إلى '+DN[dim]);return}
+if((dim==2&&py<-6)||hp<=0){rs();toast('عدت إلى نقطة البداية')}}
+function status(){let m=1e9;for(const c of CR)if(B[I(c[0],c[1],c[2])]==10){const d=Math.hypot(c[0]+.5-px,c[1]+.5-(py-1.6),c[2]+.5-pz);if(d<m)m=d}
+document.getElementById('st').textContent=DN[dim]+' · ❤ '+Math.ceil(hp)+' · البلورات '+got+'/'+NEED[dim]+(m<1e9?' · أقرب بلورة '+Math.round(m)+' م':portalOpen?' · اتجه إلى البوابة المضيئة':'')}
+const MM=document.getElementById('m');
+function play(){started=true;MM.style.display='none';playing=true;if(!touch&&cv.requestPointerLock)cv.requestPointerLock()}
+function menu(pg){playing=false;MM.style.display='flex';if(document.pointerLockElement)document.exitPointerLock();
+const bt=(t,f)=>'<button onclick="'+f+'">'+t+'</button>',
+sl=(k,l,mn,mx,st,u)=>'<label>'+l+': <b id="v_'+k+'">'+S[k]+u+'</b><input type=range min='+mn+' max='+mx+' step='+st+' value='+S[k]+' oninput="S.'+k+'=+this.value;document.getElementById(\'v_'+k+'\').textContent=this.value+\''+u+'\';sv();if(\''+k+'\'==\'sc\')setQ()"></label>',
+back=bt('رجوع',"menu('"+(started?'pause':'main')+"')");
+let h='<h1>OP Craft</h1>';
+if(pg=='main'||pg=='pause')h+='<p>'+(pg=='pause'?'اللعبة متوقفة':'اجمع البلورات واعبر ثلاثة عوالم')+'</p>'+bt(pg=='pause'?'متابعة':'العب','play()')+(pg=='pause'?bt('عالم جديد','gen(0);play()'):'')+bt('الإعدادات',"menu('set')")+bt('كيف تلعب',"menu('help')")+bt('ملء الشاشة','document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()');
+else if(pg=='set')h+=sl('sc','دقة العرض',25,100,5,'%')+'<small>100% أوضح صورة لكنها أثقل على الجهاز</small>'+sl('fov','مجال الرؤية',50,100,5,'°')+sl('vd','مسافة الرؤية',30,90,2,'')+sl('sens','حساسية الماوس',1,10,1,'')+back;
+else h+='<p style="max-width:340px;line-height:1.9">اجمع البلورات المدفونة (يظهر بعدها أقرب واحدة) لتفتح البوابة المضيئة، وادخلها للعالم التالي. في عالم الفراغ تجمع 3 بلورات لتنهي اللعبة. اضرب المخلوقات الشريرة بالزر الأيسر، وابتعد عن الحمم.</p>'+back;
+MM.innerHTML=h}
+document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockElement&&playing&&!touch)menu('pause')});
+setQ();gen(0);menu('main');
 let last=performance.now();
-(function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;upd(dt);render();if((fc++&7)==0)status();requestAnimationFrame(loop)})(last);
+(function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(playing){upd(dt);mu(dt)}render();if((fc++&7)==0)status();requestAnimationFrame(loop)})(last);
 </script></body></html>
