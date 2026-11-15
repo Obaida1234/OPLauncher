@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OP Craft</title>
+<style>
+:root{--sky:#cfe8f7;--grass:#4f9d45;--dirt:#7a5636;--ink:#1c2a1f;--paper:#f7fbf4;--muted:#55665a;--btn:#e8833a}
+@media (prefers-color-scheme:dark){:root{--sky:#1b2b38;--grass:#5fb352;--dirt:#3a2a1c;--ink:#eaf3e4;--paper:#111a14;--muted:#a3b5a8}}
+*{box-sizing:border-box}
+body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--paper);color:var(--ink);line-height:1.8}
+header{background:linear-gradient(var(--sky) 0 70%,var(--grass) 70% 88%,var(--dirt) 88%);padding:56px 20px 60px;text-align:center}
+h1{font-size:clamp(2.4rem,9vw,3.6rem);margin:0;letter-spacing:2px;direction:ltr}
+header p{margin:6px 0 24px;color:var(--muted)}
+.btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.btn{display:inline-block;background:var(--btn);color:#1d1208;font-weight:700;padding:13px 26px;border-radius:8px;text-decoration:none}
+.btn.alt{background:var(--paper);color:var(--ink);border:2px solid var(--ink)}
+.btn:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+main{max-width:640px;margin:0 auto;padding:12px 20px 60px}
+h2{font-size:1.35rem;margin:32px 0 8px}
+table{width:100%;border-collapse:collapse}
+td{padding:7px 4px;border-bottom:1px solid var(--sky)}
+td:first-child{color:var(--muted);width:38%}
+code{background:var(--sky);padding:2px 7px;border-radius:5px;direction:ltr;unicode-bidi:embed}
+.note{border-inline-start:4px solid var(--btn);padding:6px 14px;background:var(--sky)}
+footer{text-align:center;color:var(--muted);font-size:.85rem;padding-bottom:36px}
+</style>
+</head>
+<body>
+<header>
+  <h1>OP Craft</h1>
+  <p>لعبة بلوكات أصلية خفيفة، للكمبيوتر والهواتف الضعيفة</p>
+  <div class="btns">
+    <a class="btn" href="OPCraft.html">العب الآن في المتصفح</a>
+    <a class="btn alt" href="OPCraft.html" download>تحميل اللعبة (كمبيوتر + هاتف)</a>
+    <a class="btn alt" href="OPLauncher.jar" download>OP Launcher (كمبيوتر)</a>
+  </div>
+</header>
+<main>
+  <h2>التحكم</h2>
+  <table>
+    <tr><td>كمبيوتر</td><td>WASD حركة · مسافة قفز · يسار كسر · يمين بناء · 1 إلى 7 اختيار الكتلة</td></tr>
+    <tr><td>هاتف</td><td>أزرار الحركة على الشاشة، واسحب بإصبعك للنظر</td></tr>
+    <tr><td>الجودة</td><td>اضغط Q (أو زر Q في الهاتف) لتغيير الدقة حسب قوة جهازك</td></tr>
+  </table>
+
+  <h2>طريقة التشغيل</h2>
+  <ol>
+    <li><b>الأسهل:</b> اضغط «العب الآن» وستعمل اللعبة مباشرة في المتصفح بدون تثبيت.</li>
+    <li><b>بدون إنترنت:</b> حمّل <code>OPCraft.html</code> وافتحه بأي متصفح، على الكمبيوتر أو الهاتف.</li>
+    <li><b>باللانشر:</b> حمّل <code>OPLauncher.jar</code> وافتحه (يحتاج Java 8 أو أحدث) ثم اضغط «العب الآن».</li>
+  </ol>
+
+  <h2>لماذا تناسب الأجهزة الضعيفة؟</h2>
+  <p>اللعبة ترسم العالم بالمعالج وليس بكرت الشاشة، فلا تحتاج OpenGL ولا كرتاً قوياً، وحجمها أقل من 20 كيلوبايت.</p>
+
+  <p class="note">هذه الإصدار الأول: عالم صغير يُولَّد عشوائياً في كل مرة، و7 أنواع من الكتل. اللعبة من تصميمنا بالكامل وليست مرتبطة بماين كرافت.</p>
+</main>
+<footer>OP Craft · OP Launcher</footer>
+</body>
+</html>

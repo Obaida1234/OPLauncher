@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>OP Craft</title>
+<style>
+html,body{margin:0;height:100%;background:#111;overflow:hidden;font-family:Tahoma,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
+#hb{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:4px;direction:ltr}
+#hb div{width:34px;height:34px;border:3px solid #fff6;box-sizing:border-box}
+#hb .s{border-color:#fff;transform:scale(1.15)}
+#cr{position:fixed;left:50%;top:50%;width:12px;height:12px;margin:-6px;border:2px solid #fff;border-radius:50%;opacity:.6;pointer-events:none}
+#hud{position:fixed;top:6px;right:8px;left:8px;color:#fff;font-size:12px;opacity:.85;text-shadow:0 1px 2px #000;pointer-events:none}
+.b{position:fixed;width:52px;height:52px;border-radius:50%;background:#fff3;color:#fff;font-size:22px;border:2px solid #fff5;display:flex;align-items:center;justify-content:center}
+</style></head><body>
+<canvas id="c"></canvas><div id="cr"></div><div id="hb"></div>
+<div id="hud">OP Craft · WASD حركة · مسافة قفز · يسار كسر · يمين بناء · 1-7 اختيار كتلة · Q الجودة</div>
+<script>
+const W=64,D=64,H=32,B=new Uint8Array(W*D*H);
+const C=[0,[90,170,70],[130,92,60],[125,125,135],[110,76,42],[45,125,55],[222,206,140],[190,72,62]];
+const SH=[.8,.8,.5,1,.65,.65],I=(x,y,z)=>x+z*W+y*W*D;
+function hs(x,z){const n=Math.sin(x*127.1+z*311.7)*43758.5453;return n-Math.floor(n)}
+function ns(x,z){const xi=Math.floor(x),zi=Math.floor(z),fx=x-xi,fz=z-zi,u=fx*fx*(3-2*fx),v=fz*fz*(3-2*fz),a=hs(xi,zi),b=hs(xi+1,zi),c=hs(xi,zi+1),d=hs(xi+1,zi+1);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v}
+for(let x=0;x<W;x++)for(let z=0;z<D;z++){const h=Math.floor(8+ns(x/18,z/18)*9+ns(x/6,z/6)*2);for(let y=0;y<=h;y++)B[I(x,y,z)]=y<h-3?3:y<h?2:(h<9?6:1)}
+for(let i=0;i<34;i++){const x=3+Math.floor(hs(i,1)*(W-6)),z=3+Math.floor(hs(i,2)*(D-6));let y=H-1;while(y>0&&!B[I(x,y,z)])y--;if(B[I(x,y,z)]!=1)continue;for(let t=1;t<=4;t++)B[I(x,y+t,z)]=4;for(let a=-2;a<=2;a++)for(let b=-2;b<=2;b++)for(let c=3;c<=5;c++)if(Math.abs(a)+Math.abs(b)+c-3<4&&!B[I(x+a,y+c,z+b)])B[I(x+a,y+c,z+b)]=5}
+let px=32.5,pz=32.5,py=0,vy=0,yaw=0,pitch=0,sel=0,ground=false;
+{let y=H-1;while(y>0&&!B[I(32,y,32)])y--;py=y+1+1.6}
+function solid(x,y,z){if(x<0||z<0||x>=W||z>=D||y<0)return true;return y>=H?false:B[I(x,y,z)]>0}
+function hit(x,y,z){for(const a of[-.3,.3])for(const b of[-.3,.3])for(const h of[.05,.9,1.7])if(solid(Math.floor(x+a),Math.floor(y+h),Math.floor(z+b)))return true;return false}
+let rb,rt,rs,rx,ry,rz,qx,qy,qz;
+function march(ox,oy,oz,dx,dy,dz,max){
+let x=Math.floor(ox),y=Math.floor(oy),z=Math.floor(oz);
+const sx=dx>0?1:-1,sy=dy>0?1:-1,sz=dz>0?1:-1,ax=dx?Math.abs(1/dx):1e30,ay=dy?Math.abs(1/dy):1e30,az=dz?Math.abs(1/dz):1e30;
+let tx=(dx>0?x+1-ox:ox-x)*ax,ty=(dy>0?y+1-oy:oy-y)*ay,tz=(dz>0?z+1-oz:oz-z)*az,t=0,s=0;
+for(let i=0;i<max;i++){
+qx=x;qy=y;qz=z;
+if(tx<ty&&tx<tz){x+=sx;t=tx;tx+=ax;s=0}else if(ty<tz){y+=sy;t=ty;ty+=ay;s=1}else{z+=sz;t=tz;tz+=az;s=2}
+if(x<0||z<0||x>=W||z>=D||y>=H||y<0)return rb=0;
+const b=B[I(x,y,z)];
+if(b){rb=b;rt=t;rs=s*2+((s==0?dx:s==1?dy:dz)>0?0:1);rx=x;ry=y;rz=z;return b}}
+return rb=0}
+const cv=document.getElementById('c'),g=cv.getContext('2d'),QS=[[128,72],[192,108],[256,144]];
+let qi=1,RW,RH,img,buf;
+function setQ(){RW=QS[qi][0];RH=QS[qi][1];cv.width=RW;cv.height=RH;img=g.createImageData(RW,RH);buf=new Uint32Array(img.data.buffer)}
+setQ();
+function render(){
+const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
+const fx=sy*cp,fy=sp,fz=cy*cp,ux=-sy*sp,uy=cp,uz=-cy*sp,asp=RW/RH,tn=.75;
+for(let j=0,p=0;j<RH;j++){const v=(1-2*(j+.5)/RH)*tn;
+for(let i=0;i<RW;i++,p++){const u=(2*(i+.5)/RW-1)*tn*asp;
+let dx=fx+cy*u+ux*v,dy=fy+uy*v,dz=fz-sy*u+uz*v;const l=1/Math.hypot(dx,dy,dz);dx*=l;dy*=l;dz*=l;
+const m=dy>0?dy:0;let r=190-m*110,gg=220-m*70,b=245-m*15;
+if(march(px,py,pz,dx,dy,dz,44)){const c=C[rb],f=SH[rs]*(.9+((rx*7+ry*13+rz*17)&7)*.02),k=Math.min(1,rt/40),n=1-k;r=c[0]*f*n+r*k;gg=c[1]*f*n+gg*k;b=c[2]*f*n+b*k}
+buf[p]=4278190080|(b<<16)|(gg<<8)|r}}
+g.putImageData(img,0,0)}
+function fv(){const cp=Math.cos(pitch);return[Math.sin(yaw)*cp,Math.sin(pitch),Math.cos(yaw)*cp]}
+function brk(){const f=fv();if(march(px,py,pz,f[0],f[1],f[2],8)&&rt<6)B[I(rx,ry,rz)]=0}
+function plc(){const f=fv();if(march(px,py,pz,f[0],f[1],f[2],8)&&rt<6&&qx>=0&&qz>=0&&qx<W&&qz<D&&qy>=0&&qy<H&&!B[I(qx,qy,qz)]){B[I(qx,qy,qz)]=sel+1;if(hit(px,py-1.6,pz))B[I(qx,qy,qz)]=0}}
+const K={};
+function look(dx,dy){yaw+=dx*.003;pitch=Math.max(-1.5,Math.min(1.5,pitch-dy*.003))}
+function hb(){const e=document.getElementById('hb');e.innerHTML='';for(let i=0;i<7;i++){const d=document.createElement('div'),c=C[i+1];d.style.background='rgb('+c+')';if(i==sel)d.className='s';d.onclick=()=>{sel=i;hb()};e.appendChild(d)}}
+hb();
+onkeydown=e=>{K[e.code]=1;if(e.code=='KeyQ'){qi=(qi+1)%3;setQ()}const n=+e.code.slice(5);if(/^Digit[1-7]$/.test(e.code)){sel=n-1;hb()}};
+onkeyup=e=>K[e.code]=0;
+cv.onclick=()=>{if(!('ontouchstart' in window)&&cv.requestPointerLock)cv.requestPointerLock()};
+onmousemove=e=>{if(document.pointerLockElement)look(e.movementX,e.movementY)};
+cv.onmousedown=e=>{if(document.pointerLockElement){e.button==0?brk():plc()}};
+oncontextmenu=e=>e.preventDefault();
+onwheel=e=>{sel=(sel+(e.deltaY>0?1:6))%7;hb()};
+let lx,ly;
+cv.addEventListener('touchstart',e=>{lx=e.touches[0].clientX;ly=e.touches[0].clientY});
+cv.addEventListener('touchmove',e=>{const t=e.touches[0];look((t.clientX-lx)*1.6,(t.clientY-ly)*1.6);lx=t.clientX;ly=t.clientY});
+if('ontouchstart' in window){
+[['▲','KeyW','left:62px;bottom:122px'],['▼','KeyS','left:62px;bottom:10px'],['◀','KeyA','left:8px;bottom:66px'],['▶','KeyD','left:116px;bottom:66px'],['⤒','Space','right:10px;bottom:70px'],['⛏',brk,'right:10px;bottom:130px'],['▣',plc,'right:70px;bottom:70px'],['Q',()=>{qi=(qi+1)%3;setQ()},'left:8px;top:30px;width:36px;height:36px;font-size:14px']].forEach(a=>{
+const d=document.createElement('div');d.className='b';d.textContent=a[0];d.style.cssText=a[2];
+d.addEventListener('touchstart',e=>{e.preventDefault();typeof a[1]=='string'?K[a[1]]=1:a[1]()});
+d.addEventListener('touchend',e=>{if(typeof a[1]=='string')K[a[1]]=0});document.body.appendChild(d)})}
+function upd(dt){
+const mx=(K.KeyD?1:0)-(K.KeyA?1:0),mz=(K.KeyW?1:0)-(K.KeyS?1:0),c=Math.cos(yaw),s=Math.sin(yaw),vx=(c*mx+s*mz)*4.5,vz=(-s*mx+c*mz)*4.5;
+vy-=22*dt;
+const nx=px+vx*dt;if(!hit(nx,py-1.6,pz))px=nx;
+const nz=pz+vz*dt;if(!hit(px,py-1.6,nz))pz=nz;
+const ny=py+vy*dt;ground=false;if(!hit(px,ny-1.6,pz))py=ny;else{if(vy<0)ground=true;vy=0}
+if(K.Space&&ground)vy=7.5}
+let last=performance.now();
+(function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;upd(dt);render();requestAnimationFrame(loop)})(last);
+</script></body></html>
